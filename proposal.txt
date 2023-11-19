@@ -1,0 +1,33 @@
+TITLE: 
+Space Escapade
+
+SHORT DESCRIPTION:
+This game is modelled after the 'Tilt to Live' game. The user will control a spaceship to avoid and kill enemies that chase after
+it in the game. Multiple powers will spawn in space for the user to use to eliminate these enemies. The longer one survives and the 
+more enemies one kills, the more points he will score!
+
+SIMILAR PROJECTS:
+This is modelled after the tilt to live game but there are no similar projects online. This game will include similar features 
+and user experience. 
+
+The user will be an arrow and uses either 'WASD' keys or mouse drag to control the direction and movement of the arrow. There will
+be red dots ('enemy') that appear at regular points in time of regular quantities. They will approach the arrow via the shortest
+possible path and if they collide with the user, the game is over. However, there will be power-ups that appear at regular points 
+in time on the map as well which can be used to kill the red dots when the user picks them up. Points will be added when red dots 
+are killed (combos give more points), a power-up is picked up and a certain period of time has passed. Difficulty will be increased 
+over time by increasing the number of red dots and the speed at which they approach the user.
+
+
+STRUCTURAL PLAN:
+
+
+ALGORITHMIC PLAN:
+
+TIMELINE PLAN:
+
+VERSION CONTROL PLAN:
+
+MODULE LIST:
+heapq --> provides the implementation of priority queue algorithm 
+priority queues are data structures similar to queues but with each element having a priority associated with it
+efficiently maintain a collection of items with priorities and frequently retrieve the item with the highest or lowest priority
