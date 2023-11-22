@@ -15,6 +15,9 @@ def onAppStart(app):
     app.highscore = 0
     
 def reset(app):
+    app.cx = 750
+    app.cy = 530
+    app.r = 10
     app.height = 1000
     app.width = 1500
     app.startScreen = True
@@ -26,54 +29,44 @@ def reset(app):
     
 def redrawAll(app):
     if app.startScreen:
-        drawStartScreen(app)
-    elif app.paused:
-        drawPauseScreen(app)
+        graphics.drawStartScreen(app)
     elif app.gameOver:
-        drawGameOverScreen(app)
+        graphics.drawGameOverScreen(app)
     else:
-        drawGame(app)
+        graphics.drawGame(app)
+        if app.paused:
+            graphics.drawPauseScreen(app)
     
-    
-def drawStartScreen(app):
-    pass       
 
-def drawPauseScreen(app):
-    pass
-
-def drawGameOverScreen(app):
-    pass
-
-def drawGame(app):
-    pass
-        
-        
+'''     
 def onStep(app):
     if app.game:
         game.Enemies.move()
+'''
     
 def onMouseDrag(app,mouseX,mouseY):
-    if app.game:
-        game.User.position = (mouseX,mouseY)
+    if app.game and game.distance(mouseX,mouseY,app.cx,app.cy) <= 10:
+        if (20+app.r) <= app.cx <= (app.width-app.r-20) and (80+app.r) <= app.cy <= (app.height-app.r-20):
+            app.cx, app.cy = mouseX, mouseY
     
 def onMousePress(app,mouseX,mouseY):
     if app.startScreen:
-        if insideStartGameButton:
+        if 575<=mouseX<=925 and (app.height/2+app.height/5-50) <=mouseY<= (app.height/2+app.height/5+50):   #insideStartGameButton
             app.startScreen = not app.startScreen
             app.game = not app.game
-            startGame()
+            #startGame()
     elif app.paused:
-        if insideResumeButton or insideTopPlayButton:
+        if 512.5<=mouseX<=612.5 and (app.height/2+app.height/8-50) <=mouseY<= (app.height/2+app.height/8+50):   #insideResumeButton
             app.paused = not app.paused
             app.game = not app.game
-        elif insideQuitButton:
+        elif 887.5<=mouseX<=987.5 and (app.height/2+app.height/8-50) <=mouseY<= (app.height/2+app.height/8+50):   #insideQuitButton
             app.startScreen = not app.startScreen
             app.paused = not app.paused
     elif app.gameOver:
-        if insideNewGameButton:
+        if 575<=mouseX<=925 and (app.height/2+app.height/5-50) <=mouseY<= (app.height/2+app.height/5+50):   #insideNewGameButton
             reset(app)
     else:
-        if insidePauseButton:
+        if app.width-55<=mouseX<=app.width-20 and 20<=mouseY<=60:   #insidePauseButton:
             app.paused = not app.paused
             app.game = not app.game
     
@@ -82,7 +75,7 @@ def onKeyPress(app,key):
         if key in ['space','enter','p']:
             app.startScreen = not app.startScreen
             app.game = not app.game
-            startGame()
+            #startGame()
     elif app.paused:
         if key in ['space','p']:
             app.paused = not app.paused
@@ -97,14 +90,15 @@ def onKeyPress(app,key):
     
 def onKeyHold(app,keys):
     if app.game:
+        d = 2
         if 'w' in keys or 'up' in keys:
-            game.User.position[2] -= 2
+            game.User.position[2] -= d
         if 'a' in keys or 'left' in keys:
-            game.User.position[1] -= 2
+            game.User.position[1] -= d
         if 's' in keys or 'down' in keys:
-            game.User.position[2] += 2
+            game.User.position[2] += d
         if 'd' in keys or 'right' in keys:
-            game.User.position[1] += 2
+            game.User.position[1] += d
 
 def main():
     runApp()

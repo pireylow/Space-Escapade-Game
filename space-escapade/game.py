@@ -17,18 +17,18 @@
 # 2. power-up collision
 # 3. enemy collision
 
+from cmu_graphics import *
 import random
+import heapq
+import numpy as np
 
 # Global Variables
 startX = 200
 startY = 200
 
-class User:
-    def __init__(self):
-        self.position = (startX, startY)
-        
-    def move(self):
-        pass
+def distance(x0,y0,x1,y1):
+    return ((x0-x1)**2 + (y0-y1)**2)**0.5
+
     
 class Enemies:
     def __init__(self):
@@ -52,4 +52,3 @@ class Game:
         self.enemies = Enemies().positions
         self.map = GameMap().map
 
-    
