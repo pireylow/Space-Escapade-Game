@@ -22,9 +22,9 @@ import random
 import heapq
 import numpy as np
 
-# Global Variables
-startX = 200
-startY = 200
+import graphics
+import pathfinding
+
 
 def distance(x0,y0,x1,y1):
     return ((x0-x1)**2 + (y0-y1)**2)**0.5
@@ -38,17 +38,52 @@ class Enemies:
         # pathfinding algorithm
         pass
     
-class GameMap:
-    def __init__(self):
-        self.maps = []
-        self.map = self.maps[random.randrange(0,5)]
+    def add(self):
         
-    def changeMap(self):
-        self.map = self.maps[random.randrange(0,5)]
+    
+class PowerUps:
+    def __init__(self):
+        self.positions = []
+        self.power = []
+        self.drift = []
+        
+    def move(self):
+        
+    def add(self):
+        
+    
+    
     
 class Game:
-    def __init__(self):
-        self.user = User().position
-        self.enemies = Enemies().positions
-        self.map = GameMap().map
+    def __init__(self,enemies,enemyR,map,powerups,powers,powerR,userX,userY,userR):
+        self.enemies = enemies
+        self.enemyR = enemyR
+        self.map = map
+        self.powerups = powerups
+        self.powers = powers
+        self.powerR = powerR
+        self.userX = userX
+        self.userY = userY
+        self.userR = userR
 
+    def checkPowerCollision(self):
+        for i in range(len(self.powerups)):
+            powerX,powerY = self.powerups[i]
+            if distance(powerX,powerY,self.userX,self.userY) <= self.powerR + self.userR:
+                activated = self.powers[i]
+                break
+        if activated == 'nuke':
+            graphics.nuke()
+        elif activated == 'missiles':
+            graphics.missiles()
+        elif activated == 'plasmaBeam':
+            graphics.plasmaBeam()
+        elif activated == 'freeze':
+            graphics.freeze()
+    
+    def checkEnemyCollision(self):
+        for i in range(len(self.enemies)):
+            enemyX,enemyY = self.enemies[i]
+            if distance(enemyX,enemyY,self.userX,self.userY) <= self.enemyR + self.userR:
+                app.gameOver = True
+                app.game = False

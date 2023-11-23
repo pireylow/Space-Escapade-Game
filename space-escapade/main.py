@@ -9,6 +9,7 @@ import numpy as np
 import game
 import graphics
 import pathfinding
+import map_generation
 
 def onAppStart(app):
     reset(app)
@@ -25,6 +26,15 @@ def reset(app):
     app.gameOver = False
     app.game = False
     app.score = 0
+    
+    app.rows = 100
+    app.cols = 150
+    app.extra = 10
+    initializeMap(app.rows,app.cols,app.extra)
+    
+def initializeMap(rows,cols,extra):
+    app.map = map_generation.Map(rows,cols,extra).generateFinal()
+    # convert map to image to be moved around
 
     
 def redrawAll(app):

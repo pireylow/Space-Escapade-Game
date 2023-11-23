@@ -42,4 +42,16 @@ def drawGame(app):
     drawRect(20,80,app.width-40,app.height-100,fill=None,border='black')
     drawRect(app.width-20,20,15,40,align='top-right')
     drawRect(app.width-40,20,15,40,align='top-right')
-        
+    
+    
+    
+# POWER UPS
+
+def nuke():
+    
+def missiles():
+    
+def plasmaBeam():
+    
+def freeze():
+    
