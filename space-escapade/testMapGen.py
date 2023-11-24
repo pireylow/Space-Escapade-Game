@@ -5,7 +5,7 @@ def onAppStart(app):
     app.setMaxShapeCount(200000)
     app.mapRows = 100
     app.mapCols = 150
-    app.boardTop = 90
+    app.boardTop = 100
     app.boardLeft = 20
     app.boardHeight = 900
     app.boardWidth = 1400

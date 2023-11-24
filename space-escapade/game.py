@@ -36,7 +36,13 @@ class Enemies:
         
     def move(self):
         # pathfinding algorithm
-        pass
+        for i in range(len(self.positions)):
+            pos = self.positions[i]
+            pathToUser = pathfinding.astar(pos,(app.cx,app.cy))
+            if pathToUser and len(pathToUser) > 1:
+                newPos = pathToUser[1]
+                self.positions[i] = newPos
+        
     
     def add(self):
         

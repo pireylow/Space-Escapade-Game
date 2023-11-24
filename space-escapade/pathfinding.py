@@ -14,4 +14,15 @@ class Pathfinding:
     
     def astar()
     
-    def getNeighbors
+    def getNeighbors(position):
+        neighbors = []
+        currRow, currCol = position
+        for dx in range(-1,2):
+            for dy in range(-1,2):
+                if (dx,dy) != (0,0):
+                    newRow, newCol = currRow+dx, currCol+dy
+                    if (app.extra<=newRow<=app.rows-app.extra and app.extra<=newCol<=app.cols-app.extra and 
+                        app.map[newRow][newCol]):
+                        neighbors.append((newRow,newCol))
+        return neighbors
+    
