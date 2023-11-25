@@ -38,7 +38,8 @@ class Enemies:
         # pathfinding algorithm
         for i in range(len(self.positions)):
             pos = self.positions[i]
-            pathToUser = pathfinding.astar(pos,(app.cx,app.cy))
+            pathfind = Pathfinding(app.map)
+            pathToUser = pathfinding.Pathfinding.astar(app.map, pos,(app.cx,app.cy))
             if pathToUser and len(pathToUser) > 1:
                 newPos = pathToUser[1]
                 self.positions[i] = newPos
@@ -46,7 +47,8 @@ class Enemies:
     
     def add(self):
         
-    
+
+'''
 class PowerUps:
     def __init__(self):
         self.positions = []
@@ -93,3 +95,5 @@ class Game:
             if distance(enemyX,enemyY,self.userX,self.userY) <= self.enemyR + self.userR:
                 app.gameOver = True
                 app.game = False
+                
+'''

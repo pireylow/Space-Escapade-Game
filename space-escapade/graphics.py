@@ -38,20 +38,22 @@ def drawGameOverScreen(app):
     
 
 def drawGame(app):
-    drawLabel(f'score: {app.score}',20,20,align='top-left',size=45,font='orbitron')
-    drawRect(20,80,app.width-40,app.height-100,fill=None,border='black')
+    score = rgb(74, 194, 140)
+    drawRect(120,30,240,60,align='center',fill=score)
+    drawLabel(f'score: {app.score}',100,30,align='center',size=36,font='orbitron')
+    drawRect(app.width-10,10,55,60,align='top-right',fill='white')
     drawRect(app.width-20,20,15,40,align='top-right')
     drawRect(app.width-40,20,15,40,align='top-right')
     
     
-    
+ 
 # POWER UPS
 
-def nuke():
+#def nuke():
     
-def missiles():
+#def missiles():
     
-def plasmaBeam():
+#def plasmaBeam():
     
-def freeze():
-    
+#def freeze():
+

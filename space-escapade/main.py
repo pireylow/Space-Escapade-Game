@@ -5,8 +5,10 @@ from cmu_graphics import *
 import random
 import heapq
 import numpy as np
+from PIL import Image, ImageDraw
+import os, pathlib
 
-import game
+#import game
 import graphics
 import pathfinding
 import map_generation
@@ -16,8 +18,6 @@ def onAppStart(app):
     app.highscore = 0
     
 def reset(app):
-    app.cx = 750
-    app.cy = 530
     app.r = 10
     app.height = 1000
     app.width = 1500
@@ -27,22 +27,64 @@ def reset(app):
     app.game = False
     app.score = 0
     
+    app.cx = app.width/2
+    app.cy = app.height/2
+    app.mapx = app.width/2
+    app.mapy = app.height/2
+    app.sizeX = app.width
+    app.sizeY = app.height
     app.rows = 100
     app.cols = 150
     app.extra = 10
-    initializeMap(app.rows,app.cols,app.extra)
+    initializeMap(app,app.rows,app.cols,app.extra)
+    app.map = expandMap(app.map)
+    app.originalTopLeft = (len(app.map[0])//2-1, len(app.map)//2-1)
     
-def initializeMap(rows,cols,extra):
+    
+def initializeMap(app,rows,cols,extra):
     app.map = map_generation.Map(rows,cols,extra).generateFinal()
-    # convert map to image to be moved around
-
+    while (app.map[len(app.map)//2-1][len(app.map[0])//2-1] or
+           app.map[len(app.map)//2][len(app.map[0])//2] or 
+           app.map[len(app.map)//2-1][len(app.map[0])//2] or 
+           app.map[len(app.map)//2][len(app.map[0])//2-1]):
+        app.map = map_generation.Map(rows,cols,extra).generateFinal()
+    getMapImage(app.map)
+    app.mapImage = Image.open("map.png")
+    app.imageWidth,app.imageHeight = app.mapImage.width,app.mapImage.height
+    app.mapImage = CMUImage(app.mapImage)
     
+def getMapImage(map):
+    mapHeight = len(map)
+    mapWidth = len(map[0])
+    image = Image.new('RGB', (mapWidth*50, mapHeight*50), color='white')
+    wallColor = (0, 0, 0)   #black
+    draw = ImageDraw.Draw(image)
+    for y, row in enumerate(map):
+        for x, value in enumerate(row):
+            if value:
+                draw.rectangle([(x*50, y*50), ((x + 1)*50, (y + 1)*50)], fill=wallColor)
+    image.save('map.png')
+    
+def expandMap(map):
+    expanded = []
+    for row in map:
+        rowList = []
+        for val in row:
+            for _ in range(10):
+                rowList.append(val)
+        for _ in range(10):
+            expanded.append(rowList[:])
+    return expanded
+                
+
 def redrawAll(app):
     if app.startScreen:
         graphics.drawStartScreen(app)
     elif app.gameOver:
         graphics.drawGameOverScreen(app)
     else:
+        drawImage(app.mapImage,app.mapx,app.mapy,width=app.sizeX*10,height=app.sizeY*10,align='center')
+        drawCircle(app.cx,app.cy,app.r,fill='green')
         graphics.drawGame(app)
         if app.paused:
             graphics.drawPauseScreen(app)
@@ -53,11 +95,7 @@ def onStep(app):
     if app.game:
         game.Enemies.move()
 '''
-    
-def onMouseDrag(app,mouseX,mouseY):
-    if app.game and game.distance(mouseX,mouseY,app.cx,app.cy) <= 10:
-        if (20+app.r) <= app.cx <= (app.width-app.r-20) and (80+app.r) <= app.cy <= (app.height-app.r-20):
-            app.cx, app.cy = mouseX, mouseY
+
     
 def onMousePress(app,mouseX,mouseY):
     if app.startScreen:
@@ -100,15 +138,89 @@ def onKeyPress(app,key):
     
 def onKeyHold(app,keys):
     if app.game:
-        d = 2
-        if 'w' in keys or 'up' in keys:
-            game.User.position[2] -= d
-        if 'a' in keys or 'left' in keys:
-            game.User.position[1] -= d
-        if 's' in keys or 'down' in keys:
-            game.User.position[2] += d
-        if 'd' in keys or 'right' in keys:
-            game.User.position[1] += d
+        d = 5
+        if 'w' in keys or 'up' in keys: # check above
+            if checkAbove(app):
+                app.mapy += d
+        if 'a' in keys or 'left' in keys: # check left
+            if checkLeft(app):
+                app.mapx += d
+        if 's' in keys or 'down' in keys: # check below
+            if checkBelow(app):
+                app.mapy -= d
+        if 'd' in keys or 'right' in keys: # check right
+            if checkRight(app):
+                app.mapx -= d
+
+
+def checkAbove(app):
+    dx = app.mapx - app.cx
+    dy = app.mapy - app.cy
+    if dy % 10 != 0:
+        return True
+    if dx % 10 == 0:
+        if (app.map[int(app.originalTopLeft[0]-dy//10-1)][int(app.originalTopLeft[1]-dx//10)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10-1)][int(app.originalTopLeft[1]-dx//10+1)]):
+            return False
+        return True
+    else:
+        if (app.map[int(app.originalTopLeft[0]-dy//10-1)][int(app.originalTopLeft[1]-dx//10-1)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10-1)][int(app.originalTopLeft[1]-dx//10)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10-1)][int(app.originalTopLeft[1]-dx//10+1)]):
+            return False
+        return True
+
+def checkLeft(app):
+    dx = app.mapx - app.cx
+    dy = app.mapy - app.cy
+    if dx % 10 != 0:
+        return True
+    if dy % 10 == 0:
+        if (app.map[int(app.originalTopLeft[0]-dy//10)][int(app.originalTopLeft[1]-dx//10-1)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10-1)]):
+            return False
+        return True
+    else:
+        if (app.map[int(app.originalTopLeft[0]-dy//10-1)][int(app.originalTopLeft[1]-dx//10-1)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10)][int(app.originalTopLeft[1]-dx//10-1)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10-1)]):
+            return False
+        return True
+
+def checkBelow(app):
+    dx = app.mapx - app.cx
+    dy = app.mapy - app.cy
+    if dy % 10 != 0:
+        return True
+    if dx % 10 == 0:
+        if (app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10+1)]):
+            return False
+        return True
+    else:
+        if (app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10-1)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10+1)]):
+            return False
+        return True
+
+
+def checkRight(app):
+    dx = app.mapx - app.cx
+    dy = app.mapy - app.cy
+    if dx % 10 != 0:
+        return True
+    if dy % 10 == 0:
+        if (app.map[int(app.originalTopLeft[0]-dy//10)][int(app.originalTopLeft[1]-dx//10+1)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10+1)]):
+            return False
+        return True
+    else:
+        if (app.map[int(app.originalTopLeft[0]-dy//10-1)][int(app.originalTopLeft[1]-dx//10+1)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10)][int(app.originalTopLeft[1]-dx//10+1)] or 
+            app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10+1)]):
+            return False
+        return True
 
 def main():
     runApp()

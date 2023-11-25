@@ -5,11 +5,11 @@ class Map:
         self.map = []
         self.rows = rows
         self.cols = cols
-        self.extra = extra
+        self.extra = 10
         self.aliveChance = 0.55
         self.deathLimit = 4
         self.birthLimit = 5
-        self.iterations = 20
+        self.iterations = 25
         
     def generateRandom(self):
         for row in range(self.rows + 2 * self.extra):
