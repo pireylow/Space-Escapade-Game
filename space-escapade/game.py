@@ -33,8 +33,29 @@ class Enemies:
         self.positions = []
         
     def move(self,map,userTopLeftIndex):
-        # print(self.positions)
-        # # pathfinding algorithm
+        for i in range(len(self.positions)):
+            pos  = self.positions[i]
+            newRow = pos[0]
+            newCol = pos[1]
+            if pos[0] > userTopLeftIndex[0]:
+                newRow -= 1
+            elif pos[0] < userTopLeftIndex[0]:
+                newRow += 1
+            if pos[1] > userTopLeftIndex[1]:
+                newCol -= 1
+            elif pos[1] < userTopLeftIndex[1]:
+                newCol += 1
+                
+            self.positions[i] = [newRow,newCol]
+        
+    def checkEnemyCollision(self,userTopLeftIndex):
+        for i in range(len(self.positions)):
+            pos  = self.positions[i]
+            if pos[0] == userTopLeftIndex[0] and pos[1] == userTopLeftIndex[1]:
+                app.game = False
+                app.gameOver = True
+            
+        # pathfinding algorithm
         # for i in range(len(self.positions)):
         #     pos = self.positions[i]
         #     pathfind = pathfinding.Pathfinding(map, userTopLeftIndex, pos)
@@ -44,11 +65,13 @@ class Enemies:
         #     if pathToUser and len(pathToUser) > 1: 
         #         newPos = pathToUser[10]
         #         self.positions[i] = newPos
-        for i in range(len(self.positions)):
-            pos = self.positions[i]
-            path = pathfinding.pathfind(map,userTopLeftIndex,pos,[])
-            newPos = path[1]
-            self.positions[i] = newPos
+                
+        # recursion
+        # for i in range(len(self.positions)):
+        #     pos = self.positions[i]
+        #     path = pathfinding.pathfind(map,userTopLeftIndex,pos,[])
+        #     newPos = path[1]
+        #     self.positions[i] = newPos
         
     
     def add(self,screenTopLeftIndex,userTopLeftIndex):
@@ -64,7 +87,9 @@ class Enemies:
             col = random.randint(colLower,colUpper)
         self.positions.append([row,col])
         
-
+        
+        
+        
 
     # class PowerUps:
     # def __init__(self):
@@ -79,37 +104,36 @@ class Enemies:
 
 
 
-    # class Game:
-    # def __init__(self,enemies,enemyR,map,powerups,powers,powerR,userX,userY,userR):
-    #     self.enemies = enemies
-    #     self.enemyR = enemyR
-    #     self.map = map
-    #     self.powerups = powerups
-    #     self.powers = powers
-    #     self.powerR = powerR
-    #     self.userX = userX
-    #     self.userY = userY
-    #     self.userR = userR
+# class Game:
+#     def __init__(self,enemies,enemyR,map,powerups,powers,powerR,userX,userY,userR):
+#         self.enemies = enemies
+#         self.enemyR = enemyR
+#         self.map = map
+#         self.powerups = powerups
+#         self.powers = powers
+#         self.powerR = powerR
+#         self.userX = userX
+#         self.userY = userY
+#         self.userR = userR
 
-    # def checkPowerCollision(self):
-    #     for i in range(len(self.powerups)):
-    #         powerX,powerY = self.powerups[i]
-    #         if distance(powerX,powerY,self.userX,self.userY) <= self.powerR + self.userR:
-    #             activated = self.powers[i]
-    #             break
-    #     if activated == 'nuke':
-    #         graphics.nuke()
-    #     elif activated == 'missiles':
-    #         graphics.missiles()
-    #     elif activated == 'plasmaBeam':
-    #         graphics.plasmaBeam()
-    #     elif activated == 'freeze':
-    #         graphics.freeze()
+#     def checkPowerCollision(self):
+#         for i in range(len(self.powerups)):
+#             powerX,powerY = self.powerups[i]
+#             if distance(powerX,powerY,self.userX,self.userY) <= self.powerR + self.userR:
+#                 activated = self.powers[i]
+#                 break
+#         if activated == 'nuke':
+#             graphics.nuke()
+#         elif activated == 'missiles':
+#             graphics.missiles()
+#         elif activated == 'plasmaBeam':
+#             graphics.plasmaBeam()
+#         elif activated == 'freeze':
+#             graphics.freeze()
 
-    # def checkEnemyCollision(self):
-    #     for i in range(len(self.enemies)):
-    #         enemyX,enemyY = self.enemies[i]
-    #         if distance(enemyX,enemyY,self.userX,self.userY) <= self.enemyR + self.userR:
-    #             app.gameOver = True
-    #             app.game = False
-                
+#     def checkEnemyCollision(self):
+#         for i in range(len(self.enemies)):
+#             enemyX,enemyY = self.enemies[i]
+#             if distance(enemyX,enemyY,self.userX,self.userY) <= self.enemyR + self.userR:
+#                 app.gameOver = True
+#                 app.game = False

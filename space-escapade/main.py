@@ -107,10 +107,11 @@ def drawEnemies(positions,topLeftIndex):
 
 def onStep(app):
     if app.game:
-        app.timeCounter+=1
-        if app.timeCounter%150==0:
+        app.timeCounter += 1
+        if app.timeCounter%10==0:
             app.enemies.add(app.screenTopLeftIndex,app.userTopLeft)
             app.enemies.move(app.map,app.userTopLeft)
+            app.enemies.checkEnemyCollision(app.userTopLeft)
 
 
     
@@ -161,18 +162,22 @@ def onKeyHold(app,keys):
             if checkAbove(app):
                 app.mapy += d
                 app.screenTopLeftIndex[0] -= indexd
+                app.userTopLeft[0] -= indexd
         if 'a' in keys or 'left' in keys: # check left
             if checkLeft(app):
                 app.mapx += d
                 app.screenTopLeftIndex[1] -= indexd
+                app.userTopLeft[1] -= indexd
         if 's' in keys or 'down' in keys: # check below
             if checkBelow(app):
                 app.mapy -= d
                 app.screenTopLeftIndex[0] += indexd
+                app.userTopLeft[0] += indexd
         if 'd' in keys or 'right' in keys: # check right
             if checkRight(app):
                 app.mapx -= d
                 app.screenTopLeftIndex[1] += indexd
+                app.userTopLeft[1] += indexd
 
 
 def checkAbove(app):
