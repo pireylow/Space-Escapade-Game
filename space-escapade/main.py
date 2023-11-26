@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 import os, pathlib
 
-#import game
+import game
 import graphics
 import pathfinding
 import map_generation
@@ -26,6 +26,7 @@ def reset(app):
     app.gameOver = False
     app.game = False
     app.score = 0
+    app.timeCounter = 0
     
     app.cx = app.width/2
     app.cy = app.height/2
@@ -38,8 +39,11 @@ def reset(app):
     app.extra = 10
     initializeMap(app,app.rows,app.cols,app.extra)
     app.map = expandMap(app.map)
-    app.originalTopLeft = (len(app.map[0])//2-1, len(app.map)//2-1)
+    app.originalTopLeft = (len(app.map)//2-1, len(app.map[0])//2-1)
+    app.userTopLeft = [int(app.originalTopLeft[0]-(app.mapy - app.cy)//10),int(app.originalTopLeft[1]-(app.mapx - app.cx)//10)]
+    app.screenTopLeftIndex = [len(app.map)//2-100//2, len(app.map[0])//2-150//2]
     
+    app.enemies = game.Enemies()
     
 def initializeMap(app,rows,cols,extra):
     app.map = map_generation.Map(rows,cols,extra).generateFinal()
@@ -85,16 +89,29 @@ def redrawAll(app):
     else:
         drawImage(app.mapImage,app.mapx,app.mapy,width=app.sizeX*10,height=app.sizeY*10,align='center')
         drawCircle(app.cx,app.cy,app.r,fill='green')
+        drawEnemies(app.enemies.positions,app.screenTopLeftIndex)
         graphics.drawGame(app)
         if app.paused:
             graphics.drawPauseScreen(app)
     
+def drawEnemies(positions,topLeftIndex):
+    for position in positions:
+        erow = position[0]
+        ecol = position[1]
+        if (topLeftIndex[0] < erow < topLeftIndex[0] + 99 and 
+            topLeftIndex[1] < ecol < topLeftIndex[1] + 149):
+            xindex = 10 + (ecol - topLeftIndex[1]) * 10
+            yindex = 10 + (erow - topLeftIndex[0]) * 10
+            drawCircle(xindex,yindex,5,fill='red')
+ 
 
-'''     
 def onStep(app):
     if app.game:
-        game.Enemies.move()
-'''
+        app.timeCounter+=1
+        if app.timeCounter%150==0:
+            app.enemies.add(app.screenTopLeftIndex,app.userTopLeft)
+            app.enemies.move(app.map,app.userTopLeft)
+
 
     
 def onMousePress(app,mouseX,mouseY):
@@ -139,18 +156,23 @@ def onKeyPress(app,key):
 def onKeyHold(app,keys):
     if app.game:
         d = 5
+        indexd = 0.5
         if 'w' in keys or 'up' in keys: # check above
             if checkAbove(app):
                 app.mapy += d
+                app.screenTopLeftIndex[0] -= indexd
         if 'a' in keys or 'left' in keys: # check left
             if checkLeft(app):
                 app.mapx += d
+                app.screenTopLeftIndex[1] -= indexd
         if 's' in keys or 'down' in keys: # check below
             if checkBelow(app):
                 app.mapy -= d
+                app.screenTopLeftIndex[0] += indexd
         if 'd' in keys or 'right' in keys: # check right
             if checkRight(app):
                 app.mapx -= d
+                app.screenTopLeftIndex[1] += indexd
 
 
 def checkAbove(app):
