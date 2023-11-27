@@ -1,2 +1,4 @@
 .DS_Store
 install-cmu-graphics.py
+map.png
+__pycache__
