@@ -37,13 +37,13 @@ class Enemies:
             pos  = self.positions[i]
             newRow = pos[0]
             newCol = pos[1]
-            if pos[0] > userTopLeftIndex[0]:
+            if pos[0] > userTopLeftIndex[0] and not map[newRow-1][newCol]:
                 newRow -= 1
-            elif pos[0] < userTopLeftIndex[0]:
+            elif pos[0] < userTopLeftIndex[0] and not map[newRow+1][newCol]:
                 newRow += 1
-            if pos[1] > userTopLeftIndex[1]:
+            if pos[1] > userTopLeftIndex[1] and not map[newRow][newCol-1]:
                 newCol -= 1
-            elif pos[1] < userTopLeftIndex[1]:
+            elif pos[1] < userTopLeftIndex[1] and not map[newRow][newCol+1]:
                 newCol += 1
                 
             self.positions[i] = [newRow,newCol]
@@ -51,7 +51,7 @@ class Enemies:
     def checkEnemyCollision(self,userTopLeftIndex):
         for i in range(len(self.positions)):
             pos  = self.positions[i]
-            if pos[0] == userTopLeftIndex[0] and pos[1] == userTopLeftIndex[1]:
+            if abs(pos[0] - userTopLeftIndex[0])<2 and abs(pos[1] - userTopLeftIndex[1])<2:
                 app.game = False
                 app.gameOver = True
             
@@ -74,15 +74,16 @@ class Enemies:
         #     self.positions[i] = newPos
         
     
-    def add(self,screenTopLeftIndex,userTopLeftIndex):
+    def add(self,map,screenTopLeftIndex,userTopLeftIndex):
         rowLower = int(screenTopLeftIndex[0])
         rowUpper = int(screenTopLeftIndex[0] + 99)
         colLower = int(screenTopLeftIndex[1])
         colUpper = int(screenTopLeftIndex[1] + 149)
         row = random.randint(rowLower,rowUpper)
         col = random.randint(colLower,colUpper)
-        while (userTopLeftIndex[0]-20 < row < userTopLeftIndex[0]+20 or
-               userTopLeftIndex[1]-20 < col < userTopLeftIndex[1]+20):
+        while ((userTopLeftIndex[0]-20 < row < userTopLeftIndex[0]+20 or
+               userTopLeftIndex[1]-20 < col < userTopLeftIndex[1]+20) or
+               map[row][col]):
             row = random.randint(rowLower,rowUpper)
             col = random.randint(colLower,colUpper)
         self.positions.append([row,col])
@@ -91,49 +92,71 @@ class Enemies:
         
         
 
-    # class PowerUps:
-    # def __init__(self):
-    #     self.positions = []
-    #     self.power = []
-    #     self.drift = []
+class PowerUps:
+    def __init__(self):
+        self.positions = []
+        self.power = []
         
-    # def move(self):
+    def move(self,map,userTopLeftIndex):
+        for i in range(len(self.positions)):
+            pos  = self.positions[i]
+            newRow = pos[0]
+            newCol = pos[1]
+            rowShift = random.randint(-1,1)
+            colShift = random.randint(-1,1)
+            newRow += rowShift
+            newCol += colShift
+            self.positions[i] = [newRow,newCol]
         
-    # def add(self):
+    def add(self,map,screenTopLeftIndex,userTopLeftIndex):
+        rowLower = int(screenTopLeftIndex[0])
+        rowUpper = int(screenTopLeftIndex[0] + 99)
+        colLower = int(screenTopLeftIndex[1])
+        colUpper = int(screenTopLeftIndex[1] + 149)
+        count = 0
+        for i in range(len(self.positions)):
+            pos  = self.positions[i]
+            if rowLower < pos[0] < rowUpper and colLower < pos[1] < colUpper:
+                count+=1
+            if count > 2:
+                return
+        row = random.randint(rowLower,rowUpper)
+        col = random.randint(colLower,colUpper)
+        while ((userTopLeftIndex[0]-20 < row < userTopLeftIndex[0]+20 or
+               userTopLeftIndex[1]-20 < col < userTopLeftIndex[1]+20) or
+               map[row][col]):
+            row = random.randint(rowLower,rowUpper)
+            col = random.randint(colLower,colUpper)
+        self.positions.append([row,col])
         
-
-
-
-# class Game:
-#     def __init__(self,enemies,enemyR,map,powerups,powers,powerR,userX,userY,userR):
-#         self.enemies = enemies
-#         self.enemyR = enemyR
-#         self.map = map
-#         self.powerups = powerups
-#         self.powers = powers
-#         self.powerR = powerR
-#         self.userX = userX
-#         self.userY = userY
-#         self.userR = userR
-
-#     def checkPowerCollision(self):
-#         for i in range(len(self.powerups)):
-#             powerX,powerY = self.powerups[i]
-#             if distance(powerX,powerY,self.userX,self.userY) <= self.powerR + self.userR:
-#                 activated = self.powers[i]
-#                 break
-#         if activated == 'nuke':
-#             graphics.nuke()
-#         elif activated == 'missiles':
-#             graphics.missiles()
-#         elif activated == 'plasmaBeam':
-#             graphics.plasmaBeam()
-#         elif activated == 'freeze':
-#             graphics.freeze()
-
-#     def checkEnemyCollision(self):
-#         for i in range(len(self.enemies)):
-#             enemyX,enemyY = self.enemies[i]
-#             if distance(enemyX,enemyY,self.userX,self.userY) <= self.enemyR + self.userR:
-#                 app.gameOver = True
-#                 app.game = False
+        powerups = ['nuke', 'missiles', 'plasmaBeam', 'freeze']
+        power = powerups[random.randint(0,3)]
+        self.power.append(power)
+        
+    def checkPowerCollision(self,userTopLeftIndex):
+        i=0
+        while i < len(self.positions):
+            pos  = self.positions[i]
+            if abs(pos[0] - userTopLeftIndex[0])<3 and abs(pos[1] - userTopLeftIndex[1])<3:
+                pos = self.positions.pop(i)
+                power = self.power.pop(i)
+                return (pos, power)
+            else:
+                i+=1
+        return (None,None)
+                
+    def nuke(self,powerPos,currentNukes,nukeTimes):
+        currentNukes.append(powerPos)
+        nukeTimes.append(0)
+    
+    def nukeKill(self,enemies,currentNukes):
+        radius = 15
+        for nuke in currentNukes:
+            i=0
+            while i < len(enemies):
+                row = enemies[i][0]
+                col = enemies[i][1]
+                if (row-nuke[0])**2 + (col-nuke[1])**2 <= radius**2:
+                    enemies.pop(i)  
+                else:
+                    i+=1     

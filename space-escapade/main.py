@@ -44,6 +44,13 @@ def reset(app):
     app.screenTopLeftIndex = [len(app.map)//2-100//2, len(app.map[0])//2-150//2]
     
     app.enemies = game.Enemies()
+    app.powers = game.PowerUps()
+    app.currentNukes = []
+    app.nukeTimes = []
+    app.currentMissiles = []
+    app.currentPlasmaBeams = []
+    app.currentFreezes = []
+    app.freezeTimes = []
     
 def initializeMap(app,rows,cols,extra):
     app.map = map_generation.Map(rows,cols,extra).generateFinal()
@@ -89,29 +96,54 @@ def redrawAll(app):
     else:
         drawImage(app.mapImage,app.mapx,app.mapy,width=app.sizeX*10,height=app.sizeY*10,align='center')
         drawCircle(app.cx,app.cy,app.r,fill='green')
-        drawEnemies(app.enemies.positions,app.screenTopLeftIndex)
+        
+        graphics.drawPowers(app.powers.positions,app.powers.power,app.screenTopLeftIndex)
+        graphics.drawEnemies(app.enemies.positions,app.screenTopLeftIndex)
+
         graphics.drawGame(app)
+        graphics.drawNuke(app)
         if app.paused:
             graphics.drawPauseScreen(app)
     
-def drawEnemies(positions,topLeftIndex):
-    for position in positions:
-        erow = position[0]
-        ecol = position[1]
-        if (topLeftIndex[0] < erow < topLeftIndex[0] + 99 and 
-            topLeftIndex[1] < ecol < topLeftIndex[1] + 149):
-            xindex = 10 + (ecol - topLeftIndex[1]) * 10
-            yindex = 10 + (erow - topLeftIndex[0]) * 10
-            drawCircle(xindex,yindex,5,fill='red')
- 
+
 
 def onStep(app):
     if app.game:
         app.timeCounter += 1
+        app.powers.nukeKill(app.enemies.positions,app.currentNukes)
+        
+        for i in range(len(app.nukeTimes)):
+            app.nukeTimes[i]+=1
+            if app.nukeTimes[i] == 90:
+                app.nukeTimes.pop(i)
+                app.currentNukes.pop(i)
+                
+        for i in range(len(app.freezeTimes)):
+            app.freezeTimes[i]+=1
+            if app.freezeTimes[i] == 60:
+                app.freezeTimes.pop(i)
+                app.currentFreezes.pop(i)
+                
         if app.timeCounter%10==0:
-            app.enemies.add(app.screenTopLeftIndex,app.userTopLeft)
+            app.enemies.add(app.map,app.screenTopLeftIndex,app.userTopLeft)
             app.enemies.move(app.map,app.userTopLeft)
             app.enemies.checkEnemyCollision(app.userTopLeft)
+            app.powers.add(app.map,app.screenTopLeftIndex,app.userTopLeft)
+            
+            pos, power = app.powers.checkPowerCollision(app.userTopLeft)
+            if power == 'nuke':
+                app.powers.nuke(pos,app.currentNukes,app.nukeTimes)
+                
+            # elif power == 'missiles':
+            #     game.missiles()
+            # elif power == 'plasmaBeam':
+            #     game.plasmaBeam()
+            # elif power == 'freeze':
+            #     game.freeze()
+                
+        if app.timeCounter%60==0:
+            app.powers.move(app.map,app.userTopLeft)
+            
 
 
     

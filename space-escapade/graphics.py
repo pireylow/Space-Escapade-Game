@@ -46,14 +46,48 @@ def drawGame(app):
     drawRect(app.width-40,20,15,40,align='top-right')
     
     
+def drawEnemies(positions,topLeftIndex):
+    for position in positions:
+        erow = position[0]
+        ecol = position[1]
+        if (topLeftIndex[0] < erow < topLeftIndex[0] + 99 and 
+            topLeftIndex[1] < ecol < topLeftIndex[1] + 149):
+            xindex = 10 + (ecol - topLeftIndex[1]) * 10
+            yindex = 10 + (erow - topLeftIndex[0]) * 10
+            drawCircle(xindex,yindex,5,fill='red')
+            
+def drawPowers(positions,powers,topLeftIndex):
+    for i in range(len(positions)):
+        prow = positions[i][0]
+        pcol = positions[i][1]
+        if (topLeftIndex[0] < prow < topLeftIndex[0] + 99 and 
+            topLeftIndex[1] < pcol < topLeftIndex[1] + 149):
+            xindex = 10 + (pcol - topLeftIndex[1]) * 10
+            yindex = 10 + (prow - topLeftIndex[0]) * 10
+            if powers[i] == 'nuke':
+                drawCircle(xindex,yindex,8,fill='orange')
+            elif powers[i] == 'missiles':
+                drawCircle(xindex,yindex,8,fill='khaki')
+            elif powers[i] == 'plasmaBeam':
+                drawCircle(xindex,yindex,8,fill='purple')
+            elif powers[i] == 'freeze':
+                drawCircle(xindex,yindex,8,fill='lightBlue')
+ 
  
 # POWER UPS
 
-#def nuke():
+def drawNuke(app):
+    for nuke in app.currentNukes:
+        nukeRow = nuke[0]
+        nukeCol = nuke[1]
+        xindex = 10 + (nukeCol - app.screenTopLeftIndex[1]) * 10
+        yindex = 10 + (nukeRow - app.screenTopLeftIndex[0]) * 10
+        drawCircle(xindex,yindex,150,fill='orange',opacity=60)
     
-#def missiles():
     
-#def plasmaBeam():
+#def drawMissiles():
     
-#def freeze():
+#def drawPlasmaBeam():
+    
+#def drawFreeze():
 
