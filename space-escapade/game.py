@@ -145,18 +145,20 @@ class PowerUps:
                 i+=1
         return (None,None)
                 
-    def nuke(self,powerPos,currentNukes,nukeTimes):
+    def nuke(self,powerPos,currentNukes,nukeTimes,nukeKillCount):
         currentNukes.append(powerPos)
         nukeTimes.append(0)
+        nukeKillCount.append(0)
     
-    def nukeKill(self,enemies,currentNukes):
+    def nukeKill(self,enemies,currentNukes,nukeKillCount):
         radius = 15
-        for nuke in currentNukes:
+        for nuke in range(len(currentNukes)):
             i=0
             while i < len(enemies):
                 row = enemies[i][0]
                 col = enemies[i][1]
-                if (row-nuke[0])**2 + (col-nuke[1])**2 <= radius**2:
-                    enemies.pop(i)  
+                if (row-currentNukes[nuke][0])**2 + (col-currentNukes[nuke][1])**2 <= radius**2:
+                    enemies.pop(i)
+                    nukeKillCount[nuke] += 1
                 else:
-                    i+=1     
+                    i+=1

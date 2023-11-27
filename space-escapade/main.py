@@ -45,8 +45,11 @@ def reset(app):
     
     app.enemies = game.Enemies()
     app.powers = game.PowerUps()
+    
     app.currentNukes = []
     app.nukeTimes = []
+    app.nukeKillCount = []
+    
     app.currentMissiles = []
     app.currentPlasmaBeams = []
     app.currentFreezes = []
@@ -110,13 +113,15 @@ def redrawAll(app):
 def onStep(app):
     if app.game:
         app.timeCounter += 1
-        app.powers.nukeKill(app.enemies.positions,app.currentNukes)
+        app.powers.nukeKill(app.enemies.positions,app.currentNukes,app.nukeKillCount)
         
         for i in range(len(app.nukeTimes)):
             app.nukeTimes[i]+=1
             if app.nukeTimes[i] == 90:
                 app.nukeTimes.pop(i)
                 app.currentNukes.pop(i)
+                app.score += app.nukeKillCount[i] ** 2
+                app.nukeKillCount.pop(i)
                 
         for i in range(len(app.freezeTimes)):
             app.freezeTimes[i]+=1
@@ -132,7 +137,7 @@ def onStep(app):
             
             pos, power = app.powers.checkPowerCollision(app.userTopLeft)
             if power == 'nuke':
-                app.powers.nuke(pos,app.currentNukes,app.nukeTimes)
+                app.powers.nuke(pos,app.currentNukes,app.nukeTimes,app.nukeKillCount)
                 
             # elif power == 'missiles':
             #     game.missiles()
