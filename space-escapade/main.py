@@ -7,6 +7,7 @@ import heapq
 import numpy as np
 from PIL import Image, ImageDraw
 import os, pathlib
+import copy
 
 import game
 import graphics
@@ -42,6 +43,8 @@ def reset(app):
     app.originalTopLeft = (len(app.map)//2-1, len(app.map[0])//2-1)
     app.userTopLeft = [int(app.originalTopLeft[0]-(app.mapy - app.cy)//10),int(app.originalTopLeft[1]-(app.mapx - app.cx)//10)]
     app.screenTopLeftIndex = [len(app.map)//2-100//2, len(app.map[0])//2-150//2]
+    app.userDirection = [0,0]
+    app.userAngle = findUserAngle(app)
     
     app.enemies = game.Enemies()
     app.powers = game.PowerUps()
@@ -50,8 +53,19 @@ def reset(app):
     app.nukeTimes = []
     app.nukeKillCount = []
     
-    app.currentMissiles = []
     app.currentPlasmaBeams = []
+    app.plasmaBeamDirections = []
+    app.plasmaBeamTimes = []
+    app.plasmaBeamKillCount = []
+    
+    app.missilesCurrent = []
+    app.missilesMovement = []
+    app.missilesOrigin = []
+    app.missilesKillCount = []
+    app.missilesTimes = []
+    app.missilesExplosionTime = []
+    app.missilesExplosion = []
+
     app.currentFreezes = []
     app.freezeTimes = []
     
@@ -98,13 +112,17 @@ def redrawAll(app):
         graphics.drawGameOverScreen(app)
     else:
         drawImage(app.mapImage,app.mapx,app.mapy,width=app.sizeX*10,height=app.sizeY*10,align='center')
-        drawCircle(app.cx,app.cy,app.r,fill='green')
+        drawLine(app.cx,app.cy+app.r,app.cx,app.cy-app.r,lineWidth=5,arrowEnd=True,fill='green',rotateAngle=app.userAngle)
         
         graphics.drawPowers(app.powers.positions,app.powers.power,app.screenTopLeftIndex)
         graphics.drawEnemies(app.enemies.positions,app.screenTopLeftIndex)
 
         graphics.drawGame(app)
         graphics.drawNuke(app)
+        graphics.drawPlasmaBeam(app)
+        graphics.drawMissiles(app)
+        graphics.drawMissilesExplosion(app)
+        
         if app.paused:
             graphics.drawPauseScreen(app)
     
@@ -113,22 +131,36 @@ def redrawAll(app):
 def onStep(app):
     if app.game:
         app.timeCounter += 1
-        app.powers.nukeKill(app.enemies.positions,app.currentNukes,app.nukeKillCount)
         
-        for i in range(len(app.nukeTimes)):
-            app.nukeTimes[i]+=1
-            if app.nukeTimes[i] == 90:
-                app.nukeTimes.pop(i)
-                app.currentNukes.pop(i)
-                app.score += app.nukeKillCount[i] ** 2
-                app.nukeKillCount.pop(i)
+        # nuke
+        app.powers.nukeKill(app.enemies.positions,app.currentNukes,app.nukeKillCount)
+        nukeEvents(app)
                 
+        # plasmaBeam
+        for i in range(len(app.plasmaBeamTimes)):
+            app.plasmaBeamTimes[i]+=1
+            if app.plasmaBeamTimes[i] >= 20:
+                if len(app.currentPlasmaBeams) < len(app.plasmaBeamTimes):
+                    app.currentPlasmaBeams.append(copy.copy(app.userTopLeft))
+                if len(app.plasmaBeamDirections)<len(app.plasmaBeamTimes):
+                    app.plasmaBeamDirections.append(copy.copy(app.userDirection))
+                app.powers.plasmaBeamKill(app.enemies.positions,app.currentPlasmaBeams,app.plasmaBeamKillCount)
+                app.powers.plasmaBeamMove(app.currentPlasmaBeams,app.plasmaBeamDirections)
+                plasmaBeamOut(app)
+                
+        # missiles
+        missilesEvent(app)
+        missilesExplosionEvent(app)
+                
+        # freeze
         for i in range(len(app.freezeTimes)):
             app.freezeTimes[i]+=1
             if app.freezeTimes[i] == 60:
                 app.freezeTimes.pop(i)
                 app.currentFreezes.pop(i)
                 
+                
+        # others       
         if app.timeCounter%10==0:
             app.enemies.add(app.map,app.screenTopLeftIndex,app.userTopLeft)
             app.enemies.move(app.map,app.userTopLeft)
@@ -138,19 +170,83 @@ def onStep(app):
             pos, power = app.powers.checkPowerCollision(app.userTopLeft)
             if power == 'nuke':
                 app.powers.nuke(pos,app.currentNukes,app.nukeTimes,app.nukeKillCount)
-                
-            # elif power == 'missiles':
-            #     game.missiles()
-            # elif power == 'plasmaBeam':
-            #     game.plasmaBeam()
+              
+            elif power == 'plasmaBeam':
+                app.powers.plasmaBeam(app.plasmaBeamKillCount,app.plasmaBeamTimes) 
+                  
+            elif power == 'missiles':
+                app.powers.missiles(app.missilesMovement,app.missilesOrigin,app.missilesCurrent,pos,app.missilesKillCount,app.missilesTimes)
+
             # elif power == 'freeze':
             #     game.freeze()
                 
         if app.timeCounter%60==0:
             app.powers.move(app.map,app.userTopLeft)
             
+def nukeEvents(app):
+    i=0
+    while i < len(app.nukeTimes):
+        app.nukeTimes[i]+=1
+        if app.nukeTimes[i] == 90:
+            app.nukeTimes.pop(i)
+            app.currentNukes.pop(i)
+            app.score += app.nukeKillCount[i] ** 2
+            app.nukeKillCount.pop(i)
+        else:
+            i+=1
+            
+def plasmaBeamOut(app):
+    i=0
+    while i < len(app.currentPlasmaBeams):
+        if (app.currentPlasmaBeams[i][0] + app.plasmaBeamDirections[i][0] <= 1 
+            or app.currentPlasmaBeams[i][0] + app.plasmaBeamDirections[i][0] >= len(app.map)-1
+            or app.currentPlasmaBeams[i][1] + app.plasmaBeamDirections[i][1] <= 1
+            or app.currentPlasmaBeams[i][1] + app.plasmaBeamDirections[i][1] >= len(app.map)-1
+            or app.screenTopLeftIndex[0]-app.currentPlasmaBeams[i][0] >= 200
+            or app.screenTopLeftIndex[1]-app.currentPlasmaBeams[i][1] >= 200
+            or app.currentPlasmaBeams[i][0]-app.screenTopLeftIndex[0] >= 300
+            or app.currentPlasmaBeams[i][0]-app.screenTopLeftIndex[0] >= 350):
+            app.currentPlasmaBeams.pop(i)
+            app.plasmaBeamDirections.pop(i)
+            app.plasmaBeamTimes.pop(i)
+            app.score += app.plasmaBeamKillCount[i] ** 2
+            app.plasmaBeamKillCount.pop(i)
+        else:
+            i+=1
+ 
+def missilesEvent(app):
+    i=0
+    while i < len(app.missilesTimes):
+        app.missilesTimes[i]+=1
+        if app.missilesTimes[i] == 151:
+            
+            app.missilesExplosion.append(copy.copy(app.missilesCurrent.pop(i)))
+            app.missilesTimes.pop(i)
+            app.missilesOrigin.pop(i)
+            app.missilesMovement.pop(i)
+            app.missilesExplosionTime.append(0)
+            
+        else:
+            if app.timeCounter%10==0:
+                app.powers.missilesMove(i,app.missilesCurrent,app.missilesMovement)
+            i+=1
+            
+def missilesExplosionEvent(app):
+    i=0
+    while i<len(app.missilesExplosionTime):
+        app.missilesExplosionTime[i]+=1
 
-
+        app.powers.missilesKill(app.enemies.positions,app.missilesExplosion,app.missilesKillCount)
+        if len(app.missilesExplosion)==0:
+            app.score += app.missilesKillCount[0] ** 2
+            app.missilesKillCount.pop(0)
+        
+        if app.missilesExplosionTime[i]==45:
+            app.missilesExplosion.pop(i)
+            app.missilesExplosionTime.pop(i)
+        else:
+            i+=1
+            
     
 def onMousePress(app,mouseX,mouseY):
     if app.startScreen:
@@ -195,26 +291,61 @@ def onKeyHold(app,keys):
     if app.game:
         d = 5
         indexd = 0.5
-        if 'w' in keys or 'up' in keys: # check above
+        if 'w' in keys: # check above
             if checkAbove(app):
                 app.mapy += d
                 app.screenTopLeftIndex[0] -= indexd
                 app.userTopLeft[0] -= indexd
-        if 'a' in keys or 'left' in keys: # check left
+        if 'a' in keys: # check left
             if checkLeft(app):
                 app.mapx += d
                 app.screenTopLeftIndex[1] -= indexd
                 app.userTopLeft[1] -= indexd
-        if 's' in keys or 'down' in keys: # check below
+        if 's' in keys: # check below
             if checkBelow(app):
                 app.mapy -= d
                 app.screenTopLeftIndex[0] += indexd
                 app.userTopLeft[0] += indexd
-        if 'd' in keys or 'right' in keys: # check right
+        if 'd' in keys: # check right
             if checkRight(app):
                 app.mapx -= d
                 app.screenTopLeftIndex[1] += indexd
                 app.userTopLeft[1] += indexd
+                
+        if 'w' in keys and 's' not in keys:
+            app.userDirection[0] = -1
+        elif 's' in keys and 'w' not in keys:
+            app.userDirection[0] = 1
+        else:
+            app.userDirection[0] = 0
+            
+        if 'a' in keys and 'd' not in keys:
+            app.userDirection[1] = -1
+        elif 'd' in keys and 'a' not in keys:
+            app.userDirection[1] = 1
+        else:
+            app.userDirection[1] = 0
+            
+        app.userAngle = findUserAngle(app)
+        
+def findUserAngle(app):
+    if app.userDirection == [0,0] or app.userDirection == [-1,0]:
+        return 0
+    elif app.userDirection == [-1,1]:
+        return 45
+    elif app.userDirection == [0,1]:
+        return 90
+    elif app.userDirection == [1,1]:
+        return 135
+    elif app.userDirection == [1,0]:
+        return 180
+    elif app.userDirection == [1,-1]:
+        return 225
+    elif app.userDirection == [0,-1]:
+        return 270
+    elif app.userDirection == [-1,-1]:
+        return 315
+        
 
 
 def checkAbove(app):
@@ -267,7 +398,6 @@ def checkBelow(app):
             app.map[int(app.originalTopLeft[0]-dy//10+1)][int(app.originalTopLeft[1]-dx//10+1)]):
             return False
         return True
-
 
 def checkRight(app):
     dx = app.mapx - app.cx

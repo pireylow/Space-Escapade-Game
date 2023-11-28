@@ -25,7 +25,6 @@ def drawPauseScreen(app):
     drawRect(app.width/2+app.width/8,app.height/2+app.height/8, 100, 100, fill='red',align='center')
     drawLabel("quit",app.width/2+app.width/8,app.height/2+app.height/8,size=30,font='orbitron', fill='white')
 
-
 def drawGameOverScreen(app):
     drawRect(app.width/2, app.height/2-app.height/6,600,300,fill='red',align='center')
     drawLabel("game over :'(", app.width/2, app.height/2-app.height/4,fill='white',font='orbitron',size=75)
@@ -83,11 +82,37 @@ def drawNuke(app):
         xindex = 10 + (nukeCol - app.screenTopLeftIndex[1]) * 10
         yindex = 10 + (nukeRow - app.screenTopLeftIndex[0]) * 10
         drawCircle(xindex,yindex,150,fill='orange',opacity=60)
+  
+def drawPlasmaBeam(app):
+    for plasmaBeam in range(len(app.plasmaBeamTimes)):
+        if app.plasmaBeamTimes[plasmaBeam] >= 20 and len(app.currentPlasmaBeams)>=len(app.plasmaBeamTimes):
+            plasmaBeamRow = app.currentPlasmaBeams[plasmaBeam][0]
+            plasmaBeamCol = app.currentPlasmaBeams[plasmaBeam][1]
+            xindex = 10 + (plasmaBeamCol - app.screenTopLeftIndex[1]) * 10
+            yindex = 10 + (plasmaBeamRow - app.screenTopLeftIndex[0]) * 10
+            drawCircle(xindex,yindex,100,fill='purple',opacity=60)
     
+def drawMissiles(app):
+    for missiles in range(len(app.missilesCurrent)):
+        if app.missilesTimes[missiles] < 150:
+            missilesRow = app.missilesCurrent[missiles][0]
+            missilesCol = app.missilesCurrent[missiles][1]
+            originRow = app.missilesOrigin[missiles][0]
+            originCol = app.missilesOrigin[missiles][1]
+            startx = 10 + (originCol - app.screenTopLeftIndex[1]) * 10
+            starty = 10 + (originRow - app.screenTopLeftIndex[0]) * 10
+            endx = 10 + (missilesCol - app.screenTopLeftIndex[1]) * 10
+            endy = 10 + (missilesRow - app.screenTopLeftIndex[0]) * 10
+            drawLine(startx,starty,endx,endy,arrowEnd=True,lineWidth=3,fill='khaki')
+            
+            
+def drawMissilesExplosion(app):
+    for explosion in range(len(app.missilesExplosion)):
+        explosionRow = app.missilesExplosion[explosion][0]
+        explosionCol = app.missilesExplosion[explosion][1]
+        cx = 10 + (explosionCol - app.screenTopLeftIndex[1]) * 10
+        cy = 10 + (explosionRow - app.screenTopLeftIndex[0]) * 10
+        drawCircle(cx,cy,100,fill='khaki',opacity=60)
     
-#def drawMissiles():
-    
-#def drawPlasmaBeam():
-    
-#def drawFreeze():
-
+# def drawFreeze(app):
+#     pass

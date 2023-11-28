@@ -19,6 +19,7 @@
 
 from cmu_graphics import *
 import random
+import copy
 import heapq
 import random
 import pathfinding
@@ -54,6 +55,8 @@ class Enemies:
             if abs(pos[0] - userTopLeftIndex[0])<2 and abs(pos[1] - userTopLeftIndex[1])<2:
                 app.game = False
                 app.gameOver = True
+                if app.score > app.highscore:
+                    app.highscore = app.score
             
         # pathfinding algorithm
         # for i in range(len(self.positions)):
@@ -144,7 +147,9 @@ class PowerUps:
             else:
                 i+=1
         return (None,None)
-                
+       
+       
+    # nuke         
     def nuke(self,powerPos,currentNukes,nukeTimes,nukeKillCount):
         currentNukes.append(powerPos)
         nukeTimes.append(0)
@@ -162,3 +167,57 @@ class PowerUps:
                     nukeKillCount[nuke] += 1
                 else:
                     i+=1
+                    
+    
+    # plasmaBeam
+    def plasmaBeam(self,plasmaBeamKillCount,plasmaBeamTimes):
+        plasmaBeamKillCount.append(0)
+        plasmaBeamTimes.append(0)
+        
+        
+    def plasmaBeamKill(self,enemies,currentPlasmaBeams,plasmaBeamKillCount):
+        radius = 10
+        for plasmaBeam in range(len(plasmaBeamKillCount)):
+            i=0
+            while i < len(enemies):
+                row = enemies[i][0]
+                col = enemies[i][1]
+                if (row-currentPlasmaBeams[plasmaBeam][0])**2 + (col-currentPlasmaBeams[plasmaBeam][1])**2 <= radius**2:
+                    enemies.pop(i)
+                    plasmaBeamKillCount[plasmaBeam] += 1
+                else:
+                    i+=1
+                    
+    def plasmaBeamMove(self,currentPlasmaBeams,plasmaBeamDirection):
+        for i in range(len(currentPlasmaBeams)):
+            currentPlasmaBeams[i][0] += plasmaBeamDirection[i][0]*2
+            currentPlasmaBeams[i][1] += plasmaBeamDirection[i][1]*2
+           
+           
+    # missiles
+    def missiles(self,missilesMovement,missilesOrigin,missilesCurrent,powerPos,missilesKillCount,missilesTime):
+        missilesKillCount.append(0)
+        for _ in range(5):
+            missilesTime.append(0)
+            rowShift = random.randint(-3,3)
+            colShift = random.randint(-3,3)
+            missilesMovement.append([rowShift,colShift])
+            missilesOrigin.append(copy.copy(powerPos))
+            missilesCurrent.append(copy.copy(powerPos))
+            
+    def missilesKill(self,enemies,missilesExplosion,missilesKillCount):
+        radius = 10
+        for explosion in range(len(missilesExplosion)):
+                i = 0
+                while i < len(enemies):
+                    row = enemies[i][0]
+                    col = enemies[i][1]
+                    if (row-missilesExplosion[explosion][0])**2 + (col-missilesExplosion[explosion][1])**2 <= radius**2:
+                        enemies.pop(i)
+                        missilesKillCount[explosion//5] += 1
+                    else:
+                        i+=1
+    
+    def missilesMove(self,index,missilesCurrent,missilesMovement):
+        missilesCurrent[index][0] += missilesMovement[index][0]
+        missilesCurrent[index][1] += missilesMovement[index][1]      
