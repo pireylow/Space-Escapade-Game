@@ -68,6 +68,9 @@ def reset(app):
 
     app.currentFreezes = []
     app.freezeTimes = []
+    app.frozenEnemies = []
+    app.frozenEnemiesTimes = []
+    app.freezeKillCount = []
     
 def initializeMap(app,rows,cols,extra):
     app.map = map_generation.Map(rows,cols,extra).generateFinal()
@@ -122,6 +125,8 @@ def redrawAll(app):
         graphics.drawPlasmaBeam(app)
         graphics.drawMissiles(app)
         graphics.drawMissilesExplosion(app)
+        graphics.drawFreeze(app)
+        graphics.drawFrozenEnemies(app)
         
         if app.paused:
             graphics.drawPauseScreen(app)
@@ -153,11 +158,8 @@ def onStep(app):
         missilesExplosionEvent(app)
                 
         # freeze
-        for i in range(len(app.freezeTimes)):
-            app.freezeTimes[i]+=1
-            if app.freezeTimes[i] == 60:
-                app.freezeTimes.pop(i)
-                app.currentFreezes.pop(i)
+        freezeEvents(app)
+        freezeKillEvents(app)
                 
                 
         # others       
@@ -177,8 +179,8 @@ def onStep(app):
             elif power == 'missiles':
                 app.powers.missiles(app.missilesMovement,app.missilesOrigin,app.missilesCurrent,pos,app.missilesKillCount,app.missilesTimes)
 
-            # elif power == 'freeze':
-            #     game.freeze()
+            elif power == 'freeze':
+                app.powers.freeze(app.currentFreezes,pos,app.freezeTimes,app.freezeKillCount)
                 
         if app.timeCounter%60==0:
             app.powers.move(app.map,app.userTopLeft)
@@ -246,7 +248,32 @@ def missilesExplosionEvent(app):
             app.missilesExplosionTime.pop(i)
         else:
             i+=1
+   
+def freezeEvents(app):
+    app.powers.freezeCheck(app.enemies.positions,app.currentFreezes,app.frozenEnemies,app.frozenEnemiesTimes)
+    i=0
+    while i < len(app.freezeTimes):
+        app.freezeTimes[i]+=1
+        if app.freezeTimes[i]==45:
+            app.currentFreezes.pop(i)
+            app.freezeTimes.pop(i)
+        else:
+            i+=1
             
+def freezeKillEvents(app):
+    app.powers.freezeKill(app.userTopLeft,app.frozenEnemies,app.frozenEnemiesTimes,app.freezeKillCount)
+    i=0
+    while i < len(app.frozenEnemiesTimes):
+        app.frozenEnemiesTimes[i]+=1
+        if app.frozenEnemiesTimes[i]==200:
+            app.enemies.positions.append(app.frozenEnemies.pop(i))
+            app.frozenEnemiesTimes.pop(i)
+            if len(app.frozenEnemies)==0:
+                app.score += app.freezeKillCount[0] ** 2
+                app.freezeKillCount.pop(0)
+        else:
+            i+=1
+             
     
 def onMousePress(app,mouseX,mouseY):
     if app.startScreen:

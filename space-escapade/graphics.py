@@ -84,7 +84,7 @@ def drawNuke(app):
         drawCircle(xindex,yindex,150,fill='orange',opacity=60)
   
 def drawPlasmaBeam(app):
-    for plasmaBeam in range(len(app.plasmaBeamTimes)):
+    for plasmaBeam in range(len(app.currentPlasmaBeams)):
         if app.plasmaBeamTimes[plasmaBeam] >= 20 and len(app.currentPlasmaBeams)>=len(app.plasmaBeamTimes):
             plasmaBeamRow = app.currentPlasmaBeams[plasmaBeam][0]
             plasmaBeamCol = app.currentPlasmaBeams[plasmaBeam][1]
@@ -114,5 +114,19 @@ def drawMissilesExplosion(app):
         cy = 10 + (explosionRow - app.screenTopLeftIndex[0]) * 10
         drawCircle(cx,cy,100,fill='khaki',opacity=60)
     
-# def drawFreeze(app):
-#     pass
+def drawFreeze(app):
+    for freeze in range(len(app.currentFreezes)):
+        freezeRow = app.currentFreezes[freeze][0]
+        freezeCol = app.currentFreezes[freeze][1]
+        cx = 10 + (freezeCol - app.screenTopLeftIndex[1]) * 10
+        cy = 10 + (freezeRow - app.screenTopLeftIndex[0]) * 10
+        drawRect(cx,cy,400,400,fill='lightBlue',opacity=60,align='center')
+
+def drawFrozenEnemies(app):
+    for frozen in range(len(app.frozenEnemies)):
+        frozenRow = app.frozenEnemies[frozen][0]
+        frozenCol = app.frozenEnemies[frozen][1]
+        cx = 10 + (frozenCol - app.screenTopLeftIndex[1]) * 10
+        cy = 10 + (frozenRow - app.screenTopLeftIndex[0]) * 10
+        drawRect(cx,cy,18,18,fill='lightBlue',opacity=60,align='center',rotateAngle=45)
+        drawCircle(cx,cy,5,fill='red')
