@@ -31,7 +31,7 @@ class Enemies:
     def checkEnemyCollision(self,userTopLeftIndex):
         for i in range(len(self.positions)):
             pos  = self.positions[i]
-            if abs(pos[0] - userTopLeftIndex[0])<4 and abs(pos[1] - userTopLeftIndex[1])<4:
+            if abs(pos[0] - userTopLeftIndex[0])<3 and abs(pos[1] - userTopLeftIndex[1])<3:
                 app.game = False
                 app.gameOver = True
                 if app.score > app.highscore:
@@ -114,7 +114,7 @@ class PowerUps:
         self.positions.append([row,col])
         
         powerups = ['nuke', 'missiles', 'plasmaBeam', 'freeze']
-        power = powerups[random.randint(3,3)]
+        power = powerups[random.randint(0,3)]
         self.power.append(power)
         
     def checkPowerCollision(self,userTopLeftIndex):
