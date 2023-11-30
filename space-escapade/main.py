@@ -1,10 +1,6 @@
-# handles user input (controller) and calls game.py (model) and graphics.py (view)
-# mouse drag, mouse press, key press, key hold
-
 from cmu_graphics import *
 import random
 import heapq
-import numpy as np
 from PIL import Image, ImageDraw
 import os, pathlib
 import copy
@@ -13,6 +9,10 @@ import game
 import graphics
 import pathfinding
 import map_generation
+
+# ------------------------------------------------------------------------------
+#                         MODEL: Variable Initialized
+# ------------------------------------------------------------------------------
 
 def onAppStart(app):
     reset(app)
@@ -28,6 +28,7 @@ def reset(app):
     app.game = False
     app.score = 0
     app.timeCounter = 0
+    app.difficultyDivisor = 12
     
     app.cx = app.width/2
     app.cy = app.height/2
@@ -45,6 +46,10 @@ def reset(app):
     app.screenTopLeftIndex = [len(app.map)//2-100//2, len(app.map[0])//2-150//2]
     app.userDirection = [0,0]
     app.userAngle = findUserAngle(app)
+    getUserImage(app)
+    getExplosionImage(app)
+    getPlasmaBeamImage(app)
+    getFreezeImage(app)
     
     app.enemies = game.Enemies()
     app.powers = game.PowerUps()
@@ -57,6 +62,7 @@ def reset(app):
     app.plasmaBeamDirections = []
     app.plasmaBeamTimes = []
     app.plasmaBeamKillCount = []
+    app.plasmaBeamAngle = []
     
     app.missilesCurrent = []
     app.missilesMovement = []
@@ -71,6 +77,10 @@ def reset(app):
     app.frozenEnemies = []
     app.frozenEnemiesTimes = []
     app.freezeKillCount = []
+    
+# ------------------------------------------------------------------------------
+#                        Functions to Create Map
+# ------------------------------------------------------------------------------
     
 def initializeMap(app,rows,cols,extra):
     app.map = map_generation.Map(rows,cols,extra).generateFinal()
@@ -87,13 +97,14 @@ def initializeMap(app,rows,cols,extra):
 def getMapImage(map):
     mapHeight = len(map)
     mapWidth = len(map[0])
-    image = Image.new('RGB', (mapWidth*50, mapHeight*50), color='white')
-    wallColor = (0, 0, 0)   #black
+    image = Image.new('RGB', (mapWidth*50, mapHeight*50), (50,50,50))
+    tile = Image.open('images/tile.png')
+    tile = tile.resize((50,50))
     draw = ImageDraw.Draw(image)
     for y, row in enumerate(map):
         for x, value in enumerate(row):
             if value:
-                draw.rectangle([(x*50, y*50), ((x + 1)*50, (y + 1)*50)], fill=wallColor)
+                image.paste(tile,(x*50, y*50),mask=tile)
     image.save('map.png')
     
 def expandMap(map):
@@ -107,15 +118,42 @@ def expandMap(map):
             expanded.append(rowList[:])
     return expanded
                 
+# ------------------------------------------------------------------------------
+#                       Functions to Retrieve Images
+# ------------------------------------------------------------------------------               
+
+def getUserImage(app):
+    userImage = Image.open('images/spaceship.png')
+    app.userImage = CMUImage(userImage)
+
+def getExplosionImage(app):
+    explosionImage = Image.open('images/explosion.png')
+    app.explosionImage = CMUImage(explosionImage)
+    
+def getPlasmaBeamImage(app):
+    plasmaBeamImage = Image.open('images/plasmabeam.png')
+    app.plasmaBeamImage = CMUImage(plasmaBeamImage)
+    
+def getFreezeImage(app):
+    freezeImage = Image.open('images/freeze.png')
+    app.freezeImage = CMUImage(freezeImage)
+
+# ------------------------------------------------------------------------------
+#                         VIEW: Drawing of Events
+# ------------------------------------------------------------------------------
 
 def redrawAll(app):
+    
     if app.startScreen:
+        spaceScreen = Image.open('images/space.png')
+        spaceScreen = spaceScreen.resize((app.width,app.height))
+        drawImage(CMUImage(spaceScreen),0,0,width=app.width,height=app.height)
         graphics.drawStartScreen(app)
     elif app.gameOver:
         graphics.drawGameOverScreen(app)
     else:
         drawImage(app.mapImage,app.mapx,app.mapy,width=app.sizeX*10,height=app.sizeY*10,align='center')
-        drawLine(app.cx,app.cy+app.r,app.cx,app.cy-app.r,lineWidth=5,arrowEnd=True,fill='green',rotateAngle=app.userAngle)
+        drawImage(app.userImage,app.cx,app.cy,width=app.r*6,height=app.r*6,align='center',rotateAngle=app.userAngle)
         
         graphics.drawPowers(app.powers.positions,app.powers.power,app.screenTopLeftIndex)
         graphics.drawEnemies(app.enemies.positions,app.screenTopLeftIndex)
@@ -131,27 +169,24 @@ def redrawAll(app):
         if app.paused:
             graphics.drawPauseScreen(app)
     
-
+# ------------------------------------------------------------------------------
+#                       CONTROLLER: Handles Events
+# ------------------------------------------------------------------------------
 
 def onStep(app):
     if app.game:
         app.timeCounter += 1
         
+        if app.timeCounter%900==0:
+            app.score += 300*app.timeCounter//900
+            if app.difficultyDivisor>8:
+                app.difficultyDivisor-=1
+        
         # nuke
-        app.powers.nukeKill(app.enemies.positions,app.currentNukes,app.nukeKillCount)
         nukeEvents(app)
                 
         # plasmaBeam
-        for i in range(len(app.plasmaBeamTimes)):
-            app.plasmaBeamTimes[i]+=1
-            if app.plasmaBeamTimes[i] >= 20:
-                if len(app.currentPlasmaBeams) < len(app.plasmaBeamTimes):
-                    app.currentPlasmaBeams.append(copy.copy(app.userTopLeft))
-                if len(app.plasmaBeamDirections)<len(app.plasmaBeamTimes):
-                    app.plasmaBeamDirections.append(copy.copy(app.userDirection))
-                app.powers.plasmaBeamKill(app.enemies.positions,app.currentPlasmaBeams,app.plasmaBeamKillCount)
-                app.powers.plasmaBeamMove(app.currentPlasmaBeams,app.plasmaBeamDirections)
-                plasmaBeamOut(app)
+        plasmaBeamEvents(app)
                 
         # missiles
         missilesEvent(app)
@@ -163,7 +198,7 @@ def onStep(app):
                 
                 
         # others       
-        if app.timeCounter%10==0:
+        if app.timeCounter%app.difficultyDivisor==0:
             app.enemies.add(app.map,app.screenTopLeftIndex,app.userTopLeft)
             app.enemies.move(app.map,app.userTopLeft)
             app.enemies.checkEnemyCollision(app.userTopLeft)
@@ -185,7 +220,12 @@ def onStep(app):
         if app.timeCounter%60==0:
             app.powers.move(app.map,app.userTopLeft)
             
+# ------------------------------------------------------------------------------
+#                       Functions for Power-Ups
+# ------------------------------------------------------------------------------    
+
 def nukeEvents(app):
+    app.powers.nukeKill(app.enemies.positions,app.currentNukes,app.nukeKillCount,app.frozenEnemies,app.frozenEnemiesTimes)
     i=0
     while i < len(app.nukeTimes):
         app.nukeTimes[i]+=1
@@ -196,25 +236,59 @@ def nukeEvents(app):
             app.nukeKillCount.pop(i)
         else:
             i+=1
-            
-def plasmaBeamOut(app):
+                        
+def plasmaBeamEvents(app):
+    for x in range(len(app.plasmaBeamTimes)):
+        app.plasmaBeamTimes[x]+=1
     i=0
-    while i < len(app.currentPlasmaBeams):
-        if (app.currentPlasmaBeams[i][0] + app.plasmaBeamDirections[i][0] <= 1 
-            or app.currentPlasmaBeams[i][0] + app.plasmaBeamDirections[i][0] >= len(app.map)-1
-            or app.currentPlasmaBeams[i][1] + app.plasmaBeamDirections[i][1] <= 1
-            or app.currentPlasmaBeams[i][1] + app.plasmaBeamDirections[i][1] >= len(app.map)-1
-            or app.screenTopLeftIndex[0]-app.currentPlasmaBeams[i][0] >= 200
-            or app.screenTopLeftIndex[1]-app.currentPlasmaBeams[i][1] >= 200
-            or app.currentPlasmaBeams[i][0]-app.screenTopLeftIndex[0] >= 300
-            or app.currentPlasmaBeams[i][0]-app.screenTopLeftIndex[0] >= 350):
-            app.currentPlasmaBeams.pop(i)
-            app.plasmaBeamDirections.pop(i)
-            app.plasmaBeamTimes.pop(i)
-            app.score += app.plasmaBeamKillCount[i] ** 2
-            app.plasmaBeamKillCount.pop(i)
+    while i < len(app.plasmaBeamTimes):
+        if app.plasmaBeamTimes[i] >= 20:
+            if len(app.currentPlasmaBeams) < len(app.plasmaBeamTimes) and i == len(app.plasmaBeamTimes)-1:
+                app.currentPlasmaBeams.append(copy.copy(app.userTopLeft))
+            if len(app.plasmaBeamDirections)<len(app.plasmaBeamTimes) and i == len(app.plasmaBeamTimes)-1:
+                getPlasmaBeamAngle(app)
+                if app.userDirection != [0,0]:
+                    app.plasmaBeamDirections.append(copy.copy(app.userDirection))
+                else: 
+                    app.plasmaBeamDirections.append([-1,0])
+            app.powers.plasmaBeamKill(app.enemies.positions,app.currentPlasmaBeams,app.plasmaBeamKillCount,app.frozenEnemies,app.frozenEnemiesTimes)
+            app.powers.plasmaBeamMove(app.currentPlasmaBeams,app.plasmaBeamDirections)
+            if (app.currentPlasmaBeams[i][0] + app.plasmaBeamDirections[i][0] <= 1 
+                or app.currentPlasmaBeams[i][0] + app.plasmaBeamDirections[i][0] >= len(app.map)-1
+                or app.currentPlasmaBeams[i][1] + app.plasmaBeamDirections[i][1] <= 1
+                or app.currentPlasmaBeams[i][1] + app.plasmaBeamDirections[i][1] >= len(app.map)-1
+                or app.screenTopLeftIndex[0]-app.currentPlasmaBeams[i][0] >= 200
+                or app.screenTopLeftIndex[1]-app.currentPlasmaBeams[i][1] >= 200
+                or app.currentPlasmaBeams[i][0]-app.screenTopLeftIndex[0] >= 300
+                or app.currentPlasmaBeams[i][0]-app.screenTopLeftIndex[0] >= 350):
+                app.currentPlasmaBeams.pop(i)
+                app.plasmaBeamDirections.pop(i)
+                app.plasmaBeamAngle.pop(i)
+                app.plasmaBeamTimes.pop(i)
+                app.score += app.plasmaBeamKillCount[i] ** 2
+                app.plasmaBeamKillCount.pop(i)
+            else:
+                i+=1
         else:
-            i+=1
+            break
+ 
+def getPlasmaBeamAngle(app):
+    if app.userDirection == [-1,0] or app.userDirection == [0,0]:
+        app.plasmaBeamAngle.append(270)
+    elif app.userDirection == [-1,1]:
+        app.plasmaBeamAngle.append(315)
+    elif app.userDirection == [0,1]:
+        app.plasmaBeamAngle.append(0)
+    elif app.userDirection == [1,1]:
+        app.plasmaBeamAngle.append(45)
+    elif app.userDirection == [1,0]:
+        app.plasmaBeamAngle.append(90)
+    elif app.userDirection == [1,-1]:
+        app.plasmaBeamAngle.append(135)
+    elif app.userDirection == [0,-1]:
+        app.plasmaBeamAngle.append(180)
+    elif app.userDirection == [-1,-1]:
+        app.plasmaBeamAngle.append(225)
  
 def missilesEvent(app):
     i=0
@@ -238,7 +312,7 @@ def missilesExplosionEvent(app):
     while i<len(app.missilesExplosionTime):
         app.missilesExplosionTime[i]+=1
 
-        app.powers.missilesKill(app.enemies.positions,app.missilesExplosion,app.missilesKillCount)
+        app.powers.missilesKill(app.enemies.positions,app.missilesExplosion,app.missilesKillCount,app.frozenEnemies,app.frozenEnemiesTimes)
         if len(app.missilesExplosion)==0:
             app.score += app.missilesKillCount[0] ** 2
             app.missilesKillCount.pop(0)
@@ -274,6 +348,9 @@ def freezeKillEvents(app):
         else:
             i+=1
              
+# ------------------------------------------------------------------------------
+#                       Key and Mouse Events
+# ------------------------------------------------------------------------------    
     
 def onMousePress(app,mouseX,mouseY):
     if app.startScreen:
@@ -373,8 +450,6 @@ def findUserAngle(app):
     elif app.userDirection == [-1,-1]:
         return 315
         
-
-
 def checkAbove(app):
     dx = app.mapx - app.cx
     dy = app.mapy - app.cy

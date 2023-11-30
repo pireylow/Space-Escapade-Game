@@ -1,22 +1,3 @@
-# Game Logic
-
-# User Class
-# position
-# functions: updateMovement
-
-
-# Enemy Class
-# position of all enemies (random)
-# functions: updateMovement (using pathfinding algorithm)
-
-
-# Game Class
-# initialize with user, list of enemies, game map, powerups
-# functions: 
-# 1. update -- move enemies and user, check for collisions
-# 2. power-up collision
-# 3. enemy collision
-
 from cmu_graphics import *
 import random
 import copy
@@ -24,11 +5,9 @@ import heapq
 import random
 import pathfinding
 
-
-def distance(x0,y0,x1,y1):
-    return ((x0-x1)**2 + (y0-y1)**2)**0.5
-
-    
+# ------------------------------------------------------------------------------
+#                                Enemy Class
+# ------------------------------------------------------------------------------        
 class Enemies:
     def __init__(self):
         self.positions = []
@@ -52,7 +31,7 @@ class Enemies:
     def checkEnemyCollision(self,userTopLeftIndex):
         for i in range(len(self.positions)):
             pos  = self.positions[i]
-            if abs(pos[0] - userTopLeftIndex[0])<2 and abs(pos[1] - userTopLeftIndex[1])<2:
+            if abs(pos[0] - userTopLeftIndex[0])<4 and abs(pos[1] - userTopLeftIndex[1])<4:
                 app.game = False
                 app.gameOver = True
                 if app.score > app.highscore:
@@ -76,7 +55,6 @@ class Enemies:
         #     newPos = path[1]
         #     self.positions[i] = newPos
         
-    
     def add(self,map,screenTopLeftIndex,userTopLeftIndex):
         rowLower = int(screenTopLeftIndex[0])
         rowUpper = int(screenTopLeftIndex[0] + 99)
@@ -93,7 +71,9 @@ class Enemies:
         
         
         
-        
+# ------------------------------------------------------------------------------
+#                                Power-Ups Class
+# ------------------------------------------------------------------------------        
 
 class PowerUps:
     def __init__(self):
@@ -109,8 +89,9 @@ class PowerUps:
             colShift = random.randint(-1,1)
             newRow += rowShift
             newCol += colShift
-            self.positions[i] = [newRow,newCol]
-        
+            if map[newRow][newCol] == False:
+                self.positions[i] = [newRow,newCol]
+            
     def add(self,map,screenTopLeftIndex,userTopLeftIndex):
         rowLower = int(screenTopLeftIndex[0])
         rowUpper = int(screenTopLeftIndex[0] + 99)
@@ -133,14 +114,14 @@ class PowerUps:
         self.positions.append([row,col])
         
         powerups = ['nuke', 'missiles', 'plasmaBeam', 'freeze']
-        power = powerups[random.randint(0,3)]
+        power = powerups[random.randint(3,3)]
         self.power.append(power)
         
     def checkPowerCollision(self,userTopLeftIndex):
         i=0
         while i < len(self.positions):
             pos  = self.positions[i]
-            if abs(pos[0] - userTopLeftIndex[0])<3 and abs(pos[1] - userTopLeftIndex[1])<3:
+            if abs(pos[0] - userTopLeftIndex[0])<4 and abs(pos[1] - userTopLeftIndex[1])<4:
                 pos = self.positions.pop(i)
                 power = self.power.pop(i)
                 return (pos, power)
@@ -155,7 +136,7 @@ class PowerUps:
         nukeTimes.append(0)
         nukeKillCount.append(0)
     
-    def nukeKill(self,enemies,currentNukes,nukeKillCount):
+    def nukeKill(self,enemies,currentNukes,nukeKillCount,frozenEnemies,frozenEnemiesTime):
         radius = 15
         for nuke in range(len(currentNukes)):
             i=0
@@ -168,16 +149,26 @@ class PowerUps:
                 else:
                     i+=1
                     
+            f = 0
+            while f < len(frozenEnemies):
+                frow = frozenEnemies[f][0]
+                fcol = frozenEnemies[f][1]
+                if (frow-currentNukes[nuke][0])**2 + (fcol-currentNukes[nuke][1])**2 <= radius**2:
+                    frozenEnemies.pop(f)
+                    frozenEnemiesTime.pop(f)
+                    nukeKillCount[nuke] += 1
+                else:
+                    f+=1
+                    
     
     # plasmaBeam
     def plasmaBeam(self,plasmaBeamKillCount,plasmaBeamTimes):
         plasmaBeamKillCount.append(0)
         plasmaBeamTimes.append(0)
-        
-        
-    def plasmaBeamKill(self,enemies,currentPlasmaBeams,plasmaBeamKillCount):
+         
+    def plasmaBeamKill(self,enemies,currentPlasmaBeams,plasmaBeamKillCount,frozenEnemies,frozenEnemiesTime):
         radius = 10
-        for plasmaBeam in range(len(plasmaBeamKillCount)):
+        for plasmaBeam in range(len(currentPlasmaBeams)):
             i=0
             while i < len(enemies):
                 row = enemies[i][0]
@@ -187,6 +178,17 @@ class PowerUps:
                     plasmaBeamKillCount[plasmaBeam] += 1
                 else:
                     i+=1
+            
+            f = 0
+            while f < len(frozenEnemies):
+                frow = frozenEnemies[f][0]
+                fcol = frozenEnemies[f][1]
+                if (frow-currentPlasmaBeams[plasmaBeam][0])**2 + (fcol-currentPlasmaBeams[plasmaBeam][1])**2 <= radius**2:
+                    frozenEnemies.pop(f)
+                    frozenEnemiesTime.pop(f)
+                    plasmaBeamKillCount[plasmaBeam] += 1
+                else:
+                    f+=1
                     
     def plasmaBeamMove(self,currentPlasmaBeams,plasmaBeamDirection):
         for i in range(len(currentPlasmaBeams)):
@@ -205,7 +207,7 @@ class PowerUps:
             missilesOrigin.append(copy.copy(powerPos))
             missilesCurrent.append(copy.copy(powerPos))
             
-    def missilesKill(self,enemies,missilesExplosion,missilesKillCount):
+    def missilesKill(self,enemies,missilesExplosion,missilesKillCount,frozenEnemies,frozenEnemiesTime):
         radius = 10
         for explosion in range(len(missilesExplosion)):
                 i = 0
@@ -217,6 +219,16 @@ class PowerUps:
                         missilesKillCount[explosion//5] += 1
                     else:
                         i+=1
+                f = 0
+                while f < len(frozenEnemies):
+                    frow = frozenEnemies[f][0]
+                    fcol = frozenEnemies[f][1]
+                    if (frow-missilesExplosion[explosion][0])**2 + (fcol-missilesExplosion[explosion][1])**2 <= radius**2:
+                        frozenEnemies.pop(f)
+                        frozenEnemiesTime.pop(f)
+                        missilesKillCount[explosion//5] += 1
+                    else:
+                        f+=1
     
     def missilesMove(self,index,missilesCurrent,missilesMovement):
         missilesCurrent[index][0] += missilesMovement[index][0]

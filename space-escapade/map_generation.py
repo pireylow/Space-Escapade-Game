@@ -1,4 +1,18 @@
+
+# CELLULAR AUTOMATA ALGORITHM FOR MAP GENERATION
+
+# If an alive cell has four or more alive neighbours, it remains alive, otherwise it is killed.
+# If a dead cell has five or more alive neighbours, it becomes alive.
+
+# 1. Create a 2D list of random True / False values
+# 2. Loop through rows and columns and implement the aforementioned rules, and append the new result
+# 3. Iterate this process to get a desired 'emptiness' of the map (more iterations result in an 'emptier' map)
+
 import random
+
+# ------------------------------------------------------------------------------
+#                                Map Class
+# ------------------------------------------------------------------------------    
 
 class Map:
     def  __init__(self,rows,cols,extra=10):
@@ -11,6 +25,7 @@ class Map:
         self.birthLimit = 5
         self.iterations = 25
         
+    # generate a grid of True / False values randomly
     def generateRandom(self):
         for row in range(self.rows + 2 * self.extra):
             rowList = []
@@ -25,7 +40,7 @@ class Map:
                     rowList.append(True)
             self.map.append(rowList)
             
-        
+    # run one iteration of actual map generation base on the cellular automata criteria 
     def generateActual(self):
         currMap = []
         for row in range(self.rows):
@@ -39,7 +54,7 @@ class Map:
             currMap.append(rowList)
         self.map = currMap
         
-        
+    # find if the True value should be birthed or killed  
     def aliveCell(self,row,col):
         count = 0
         for dx in range(-1,2):
@@ -64,6 +79,7 @@ class Map:
             else:
                 return False
             
+    # run all iterations of actual map generation
     def generateFinal(self):
         self.generateRandom()
         for iter in range(self.iterations):

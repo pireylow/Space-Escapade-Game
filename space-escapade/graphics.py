@@ -1,18 +1,17 @@
-# draw start screen
-# draw the game -- game map, power-ups
-# draw pause screen
-# draw game over screen  
-
 from cmu_graphics import *
+from PIL import Image
 import random
 import heapq
-import numpy as np
+
+# ------------------------------------------------------------------------------
+#                              Draw Screens
+# ------------------------------------------------------------------------------    
     
 def drawStartScreen(app):
-    drawLabel('SPACE ESCAPADE', app.width/2, app.height/2-app.height/6, size=80, font='orbitron', bold=True)
-    drawLabel(f'highscore: {app.highscore}', app.width/2, app.height/2, size=45, font='orbitron')
-    drawLabel('new game', app.width/2, app.height/2+app.height/5, size=60, font='orbitron')
-    drawRect(app.width/2, app.height/2+app.height/5, 350, 100, align='center', fill=None, border='black')
+    drawLabel('SPACE ESCAPADE', app.width/2, app.height/2-app.height/6, size=80, font='orbitron', bold=True, fill='white')
+    drawLabel(f'highscore: {app.highscore}', app.width/2, app.height/2, size=45, font='orbitron',fill='white')
+    drawLabel('new game', app.width/2, app.height/2+app.height/5, size=60, font='orbitron',fill='white')
+    drawRect(app.width/2, app.height/2+app.height/5, 350, 100, align='center', fill=None, border='white')
 
 def drawPauseScreen(app):
     drawRect(0,0,app.width,app.height,fill='white',opacity=90)
@@ -35,7 +34,6 @@ def drawGameOverScreen(app):
     drawRect(app.width/2, app.height/2+app.height/5, 350, 100, align='center', fill=newGame)
     drawLabel('new game', app.width/2, app.height/2+app.height/5, size=60, font='orbitron',fill='white')
     
-
 def drawGame(app):
     score = rgb(74, 194, 140)
     drawRect(120,30,240,60,align='center',fill=score)
@@ -44,6 +42,9 @@ def drawGame(app):
     drawRect(app.width-20,20,15,40,align='top-right')
     drawRect(app.width-40,20,15,40,align='top-right')
     
+# ------------------------------------------------------------------------------
+#                     Draw Enemies and Power-Ups Objects
+# ------------------------------------------------------------------------------     
     
 def drawEnemies(positions,topLeftIndex):
     for position in positions:
@@ -66,14 +67,16 @@ def drawPowers(positions,powers,topLeftIndex):
             if powers[i] == 'nuke':
                 drawCircle(xindex,yindex,8,fill='orange')
             elif powers[i] == 'missiles':
-                drawCircle(xindex,yindex,8,fill='khaki')
+                drawCircle(xindex,yindex,8,fill='yellow')
             elif powers[i] == 'plasmaBeam':
                 drawCircle(xindex,yindex,8,fill='purple')
             elif powers[i] == 'freeze':
                 drawCircle(xindex,yindex,8,fill='lightBlue')
  
  
-# POWER UPS
+# ------------------------------------------------------------------------------
+#                           Draw Power-Ups Events
+# ------------------------------------------------------------------------------    
 
 def drawNuke(app):
     for nuke in app.currentNukes:
@@ -81,16 +84,17 @@ def drawNuke(app):
         nukeCol = nuke[1]
         xindex = 10 + (nukeCol - app.screenTopLeftIndex[1]) * 10
         yindex = 10 + (nukeRow - app.screenTopLeftIndex[0]) * 10
-        drawCircle(xindex,yindex,150,fill='orange',opacity=60)
-  
+        drawImage(app.explosionImage,xindex,yindex,width=400,height=400,opacity=60,align='center')
+        
 def drawPlasmaBeam(app):
     for plasmaBeam in range(len(app.currentPlasmaBeams)):
-        if app.plasmaBeamTimes[plasmaBeam] >= 20 and len(app.currentPlasmaBeams)>=len(app.plasmaBeamTimes):
+        if app.plasmaBeamTimes[plasmaBeam] >= 20:
             plasmaBeamRow = app.currentPlasmaBeams[plasmaBeam][0]
             plasmaBeamCol = app.currentPlasmaBeams[plasmaBeam][1]
             xindex = 10 + (plasmaBeamCol - app.screenTopLeftIndex[1]) * 10
             yindex = 10 + (plasmaBeamRow - app.screenTopLeftIndex[0]) * 10
-            drawCircle(xindex,yindex,100,fill='purple',opacity=60)
+            plasmaBeamAngle = app.plasmaBeamAngle[plasmaBeam]
+            drawImage(app.plasmaBeamImage,xindex,yindex,width=360,height=240,opacity=60,align='center',rotateAngle=plasmaBeamAngle)
     
 def drawMissiles(app):
     for missiles in range(len(app.missilesCurrent)):
@@ -103,16 +107,15 @@ def drawMissiles(app):
             starty = 10 + (originRow - app.screenTopLeftIndex[0]) * 10
             endx = 10 + (missilesCol - app.screenTopLeftIndex[1]) * 10
             endy = 10 + (missilesRow - app.screenTopLeftIndex[0]) * 10
-            drawLine(startx,starty,endx,endy,arrowEnd=True,lineWidth=3,fill='khaki')
-            
-            
+            drawLine(startx,starty,endx,endy,arrowEnd=True,lineWidth=3,fill='yellow')
+                  
 def drawMissilesExplosion(app):
     for explosion in range(len(app.missilesExplosion)):
         explosionRow = app.missilesExplosion[explosion][0]
         explosionCol = app.missilesExplosion[explosion][1]
         cx = 10 + (explosionCol - app.screenTopLeftIndex[1]) * 10
         cy = 10 + (explosionRow - app.screenTopLeftIndex[0]) * 10
-        drawCircle(cx,cy,100,fill='khaki',opacity=60)
+        drawImage(app.explosionImage,cx,cy,width=270,height=270,opacity=60,align='center')
     
 def drawFreeze(app):
     for freeze in range(len(app.currentFreezes)):
@@ -120,7 +123,7 @@ def drawFreeze(app):
         freezeCol = app.currentFreezes[freeze][1]
         cx = 10 + (freezeCol - app.screenTopLeftIndex[1]) * 10
         cy = 10 + (freezeRow - app.screenTopLeftIndex[0]) * 10
-        drawRect(cx,cy,400,400,fill='lightBlue',opacity=60,align='center')
+        drawImage(app.freezeImage,cx,cy,width=450,height=450,opacity=60,align='center')
 
 def drawFrozenEnemies(app):
     for frozen in range(len(app.frozenEnemies)):
