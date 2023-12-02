@@ -30,7 +30,7 @@ Navigate into the 'space-escapade' folder and run the 'main.py' file
 * Install [CMU-112 Graphics](https://www.cs.cmu.edu/~112/notes/hw7.html)
 
 ### Citations
-* [Cellular Automata Algorithm for Map Generation](https://code.tutsplus.com/generate-random-cave-levels-using-cellular-automata--gamedev-9664t)
+* [Cellular Automata Algorithm for Map Generation](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life)
 * [Explosion Image](https://pngtree.com/freepng/cartoon-style-blasting-game-explosion-effect_6578925.html)
 * [Freeze Image](https://www.shutterstock.com/image-vector/ice-button-frozen-frame-level-menu-2327744097)
 * [Plasma Beam Image](https://www.freepik.com/premium-vector/cartoon-laser-gun-beam-alien-combat-weapon-rays-futuristic-shot-effect-destructive-plasma-flow-bomb-blaster-attack-explosion-vector-game-element_33104830.htm)

@@ -1,5 +1,6 @@
 
 # CELLULAR AUTOMATA ALGORITHM FOR MAP GENERATION
+# Conway's Game of Life Citation: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
 # If an alive cell has four or more alive neighbours, it remains alive, otherwise it is killed.
 # If a dead cell has five or more alive neighbours, it becomes alive.
